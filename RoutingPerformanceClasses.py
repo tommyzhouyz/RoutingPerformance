@@ -1,19 +1,62 @@
 class network:
 
 	def __init__(self):
-		self._links = []
+		self._links = []	# list of link
+		self._paths = []	# list of fork_nodes
 
 	def add_link(self, link):
 		if link not in self._links:
 			self._links.append(link)
+			# update forks set (_paths), 2 nodes should be added into some fork
+			nodeA_pushed = 0
+			nodeB_pushed = 0
+			# search for all forks in paths
+			for index in range(len(self._paths)):
+				if self._paths[index]._from == link._nodeA:
+					# fork from node A already made in this fork, write node B in
+					self._paths[index]._to.append(link._nodeB)
+					nodeB_pushed = 1
+				if self._paths[index]._from == link._nodeB:
+					# fork from node B already made in this fork, write node A in
+					self._paths[index]._to.append(link._nodeA)
+					nodeA_pushed = 1
+			if nodeB_pushed == 0:
+				# fork from node A is not exist, creat one and write node B in
+				new_fork = fork_nodes(link._nodeA)
+				new_fork._to.append(link._nodeB)
+				self._paths.append(new_fork)
+				nodeB_pushed = 1
+			if nodeA_pushed == 0:
+				# fork from node B is not exist, creat one and write node A in
+				new_fork = fork_nodes(link._nodeB)
+				new_fork._to.append(link._nodeA)
+				self._paths.append(new_fork)
+				nodeA_pushed = 1
 
 	def delete_link(self, link):
 		self._links.remove(link)
 
+	def get_paths_index(self, start_node):
+		for index in range(len(self._paths)):
+			if self._paths[index]._from == start_node:
+				return index
+
+	def get_link_index(self, nodeA, nodeB):
+		for index in range(len(self._links)):
+			if self._links[index]._nodeA == nodeA:
+				if self._links[index]._nodeB == nodeB:
+					return index
+			if nodeB == self._links[index]._nodeA:
+				if nodeA == self._links[index]._nodeB:
+					return index
 	def __str__(self):
 		string = ""
+		string += "links:\n"
 		for link in self._links:
 			string += (str(link) + '\n')
+		string += "nodes:\n"
+		for fork in self._paths:
+			string += (str(fork) + '\n')
 		return string
 
 class link:
@@ -42,8 +85,11 @@ class link:
 			if time >= connection._end_time:
 				self._connections.remove(connection)
 
+	def get_link_load(self):
+		return len(self._connections)/self._capacity
+
 	def __str__(self):
-		string = ("%s \t %s \t %d \t %d/%d \n" \
+		string = ("%s\t%s\t%d\t%d/%d" \
 			%(self._nodeA, self._nodeB, self._delay, len(self._connections), self._capacity))
 		return string
 
@@ -52,6 +98,28 @@ class link:
 			if self._nodeA in (other._nodeA+other._nodeB):
 				if self._nodeB in (other._nodeA+other._nodeB):
 					return True
+		return False
+
+class fork_nodes:
+	# all branchs from a node
+	def __init__(self, source_node):
+		self._from = source_node
+		self._to = []
+
+	def add_branch(destination_node):
+		if destination_node not in self._to:
+			self._to.append(destination_node)
+
+	def __str__(self):
+		string = "From: %s to: "%self._from
+		for nodes in self._to:
+			string += nodes
+		return string
+
+	def __eq__(self, other):
+		if isinstance(other, self.__class__):
+			if self._from == other._from:
+				return True
 		return False
 
 class request:
@@ -63,8 +131,8 @@ class request:
 		self._dur = duration
 
 	def __str__(self):
-		string = ("%f \t %s \t %s \t %f \n" \
-			%(self._start_time, self._source_node, self._dest_node, self._dur))
+		string = ("%f\t%s\t%s\t%f\n" \
+			%(self._start_t, self._source_node, self._dest_node, self._dur))
 		return string
 
 class connection:
@@ -75,10 +143,27 @@ class connection:
 		self._end_time = end_time
 
 	def __str__(self):
-		string = ("%s \t %s \t %f \n" \
+		string = ("%s\t%s\t%f\n" \
 			%(self._source_node, self._dest_node, self._end_time))
 		return string
 
+class routing:
+
+	def __init__(self):
+		self._rout = []
+		self._cost = 0
+		self._hops = 0
+		self._delay = 0
+
+	def __str__(self):
+		string = str(self._rout) + str(self._cost)
+		return string
+
+	def __eq__(self, other):
+		if isinstance(other, self.__class__):
+			if self._rout == other._rout:
+				return True
+		return False
 
 
 
