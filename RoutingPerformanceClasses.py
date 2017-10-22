@@ -72,7 +72,7 @@ class link:
 		busy = len(self._connections)
 		if busy < self._capacity:
 			if connection not in self._connections:
-				self._connections.append(course)
+				self._connections.append(connection)
 		else:
 			print('Error: link has out of capacity')
 
@@ -137,7 +137,7 @@ class request:
 
 class connection:
 
-	def __init(self, source_node, destination_node, end_time):
+	def __init__(self, source_node, destination_node, end_time):
 		self._source_node = source_node
 		self._dest_node = destination_node
 		self._end_time = end_time

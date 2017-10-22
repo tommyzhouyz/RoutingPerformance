@@ -24,10 +24,11 @@ def routing_protocols(source_node, desti_node):
 	new_rout._rout.append(source_node)
 	backup_routs.add_rout(new_rout)
 	done = 0
+	lowest_cost = 10000
 	# print(backup_routs)
 	while done == 0:
 		# for all backup routs
-		print(backup_routs)
+		#print(backup_routs)
 		num_of_routs = len(backup_routs._all_routs)
 		for i in range(num_of_routs):
 			#print('i is %d'%i)
@@ -89,12 +90,14 @@ def routing_protocols(source_node, desti_node):
 					delete_flag = 0
 			# this rout process done
 			if delete_flag == 1:
-				if current_rout_info.get_last_node() != desti_node:
-					#print(current_rout_info)
-					#print(current_rout_info.get_last_node())
-					#print(desti_node)
-					backup_routs.delete_rout(current_rout_info)
-					#print('deleted, %d left'%len(backup_routs._all_routs))
+				if current_rout_info.get_last_node() == desti_node:
+					if lowest_cost >= current_rout_info._cost:
+						lowest_cost = current_rout_info._cost
+						delete_flag = 0
+						#print(current_rout_info._cost)
+			
+			if delete_flag == 1:
+				backup_routs.delete_rout(current_rout_info)
 		#print(len(routs))
 		if len(backup_routs._all_routs) == 1:
 			left_rout = backup_routs._all_routs[0]
@@ -170,20 +173,42 @@ def simulate_once():
 			# make a request according to the file
 			new_request = request(nums[0],strs[0],strs[1],nums[1])
 			num_request += 1
-			routing_protocols(strs[0], strs[1])
+			selected_routing = routing_protocols(strs[0], strs[1])
+			# check if routing available
+			good_routing = 1
+			for i in range(selected_routing._hops):
+				node_a = selected_routing._rout[i]
+				node_b = selected_routing._rout[i+1]
+				link_index = virtual_net.get_link_index(node_a, node_b)
+				curr_link = virtual_net._links[link_index]
+				curr_link.update_link(nums[0])
+				if curr_link.get_link_load() == 1:
+					good_routing = 0
+			# make_connection
+			if good_routing == 1:
+				num_success += 1
+				sum_delay += selected_routing._delay
+				sum_hop += selected_routing._hops
+				for i in range(selected_routing._hops):
+					node_a = selected_routing._rout[i]
+					node_b = selected_routing._rout[i+1]
+					link_index = virtual_net.get_link_index(node_a, node_b)
+					curr_link = virtual_net._links[link_index]
+					new_connection = connection(node_a, node_b, nums[0]+nums[1])
+					curr_link.add_connection(new_connection)
 
 		else:
 			print('workload file loading complete\n')
 
 
 
-	print(num_request, num_success,	sum_hop, sum_delay)
+	print(num_request, num_success,	sum_hop/num_success, sum_delay/num_success)
 
 
 setup_network()
 simulate_once()
 
-print(virtual_net)
+#print(virtual_net)
 
 output_file.close()
 
