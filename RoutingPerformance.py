@@ -17,20 +17,27 @@ output_file = open('output.txt', 'a')
 virtual_net = network()
 
 # functions
-'''
 def routing_protocols(source_node, desti_node):
+	cost_record = [source_node, 0]
+	backup_routs = routing_set()
 	new_rout = routing()
 	new_rout._rout.append(source_node)
-	cost_record = [source_node, 0]
-	routs = [new_rout]
+	backup_routs.add_rout(new_rout)
 	done = 0
-	print(routs)
+	# print(backup_routs)
 	while done == 0:
 		# for all backup routs
-		num_of_del = 0
-		for i in range(len(routs)):
-			print('i is %d'%i)
-			last_node = routs[i-num_of_del]._rout[len(routs[i-num_of_del]._rout)-1]
+		print(backup_routs)
+		num_of_routs = len(backup_routs._all_routs)
+		for i in range(num_of_routs):
+			#print('i is %d'%i)
+			#print(len(backup_routs._all_routs))
+			#print(num_of_routs)
+			#print(num_of_del)
+			# from back to front
+			dealing_index = num_of_routs-1-i
+			current_rout_info = backup_routs._all_routs[dealing_index]
+			last_node = current_rout_info._rout[len(current_rout_info._rout)-1]
 			index_fork = virtual_net.get_paths_index(last_node)
 			delete_flag = 1
 			for j in range(len(virtual_net._paths[index_fork]._to)):
@@ -50,13 +57,20 @@ def routing_protocols(source_node, desti_node):
 				else:
 					print('wrong ROUTING_SCHEME input')
 					extra_cost = 0
-				new_cost = routs[i-num_of_del]._cost + extra_cost
+				#print(current_rout_info)
+				new_cost = current_rout_info._cost + extra_cost
+				#buff_rout = routs[i]
 				buff_rout = routing()
-				buff_rout._rout = routs[i-num_of_del]._rout
+
+				buff_rout.copy_routing(current_rout_info)
+
 				buff_rout._rout.append(new_node)
 				buff_rout._cost = new_cost
-				buff_rout._hops = routs[i-num_of_del]._hops + extra_hop
-				buff_rout._delay = routs[i-num_of_del]._delay + extra_delay
+				buff_rout._hops += extra_hop
+				buff_rout._delay += extra_delay
+				#print(buff_rout)
+				#print(current_rout_info)
+				#print('\n')
 				# check and update cost_record then add routs(if required)
 				for k in range(int(len(cost_record)/2)):
 					#print('k is :%d'%k)
@@ -65,28 +79,32 @@ def routing_protocols(source_node, desti_node):
 						if new_cost < cost_record[k*2+1]:
 							# new record, add to routs
 							cost_record[k*2+1] = new_cost
-							routs.append(buff_rout)
+							backup_routs.add_rout(buff_rout)
 							delete_flag = 0
 				if new_node not in cost_record:
 					# this destination not recorded
 					cost_record.append(new_node)
 					cost_record.append(new_cost)
-					routs.append(buff_rout)
+					backup_routs.add_rout(buff_rout)
 					delete_flag = 0
 			# this rout process done
-			print(routs[i-num_of_del])
 			if delete_flag == 1:
-				routs.remove(routs[i-num_of_del])
-				num_of_del += 1
-				print('deleted')
+				if current_rout_info.get_last_node() != desti_node:
+					#print(current_rout_info)
+					#print(current_rout_info.get_last_node())
+					#print(desti_node)
+					backup_routs.delete_rout(current_rout_info)
+					#print('deleted, %d left'%len(backup_routs._all_routs))
 		#print(len(routs))
-		if len(routs) == 1:
-			if routs[0]._rout[len(routs[0]._rout)-1] == desti_node:
-				done == 1
+		if len(backup_routs._all_routs) == 1:
+			left_rout = backup_routs._all_routs[0]
+			#print(left_rout)
+			if left_rout.get_last_node() == desti_node:
+				done = 1
 				print("finish")
-				print(routs[0])
-	return routs[0]
-'''
+				#print(done)
+	print(left_rout)
+	return backup_routs._all_routs[0]
 
 def setup_network():
 	with open(topology_file, 'r') as topology:

@@ -155,8 +155,24 @@ class routing:
 		self._hops = 0
 		self._delay = 0
 
+	def copy_routing(self, other):
+		if isinstance(other, self.__class__):
+			self._rout = []
+			for i in range(len(other._rout)):
+				self._rout.append(other._rout[i])
+			self._cost = other._cost
+			self._hops = other._hops
+			self._delay = other._delay
+
+	def get_last_node(self):
+		return self._rout[len(self._rout)-1]			
+
 	def __str__(self):
-		string = str(self._rout) + str(self._cost)
+		string = ''
+		for i in range(len(self._rout)):
+			string += str(self._rout[i])
+		string += ('\ncost is : %f | num of hops is : %d | delay is : %f'\
+				%(self._cost, self._hops, self._delay))
 		return string
 
 	def __eq__(self, other):
@@ -164,6 +180,38 @@ class routing:
 			if self._rout == other._rout:
 				return True
 		return False
+
+class routing_set:
+
+	def __init__(self):
+		self._all_routs = []
+
+	def add_rout(self, rout):
+		if rout not in self._all_routs:
+			self._all_routs.append(rout)
+
+	def delete_rout(self, rout):
+		self._all_routs.remove(rout)
+
+	def __str__(self):
+		string = ''
+		for rout in self._all_routs:
+			string += str(rout) + '\n'
+
+		return string
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
